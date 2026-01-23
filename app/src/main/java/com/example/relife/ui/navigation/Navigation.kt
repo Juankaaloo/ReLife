@@ -1,0 +1,273 @@
+package com.relife.ui.navigation
+
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.relife.ui.auth.AuthScreen
+import com.relife.ui.explore.ExploreScreen
+import com.relife.ui.home.HomeScreen
+import com.relife.ui.marketplace.MarketplaceScreen
+import com.relife.ui.messages.MessagesScreen
+import com.relife.ui.notifications.NotificationsScreen
+import com.relife.ui.profile.ProfileScreen
+import com.relife.ui.settings.SettingsScreen
+import com.relife.ui.stats.StatsScreen
+import com.relife.ui.theme.*
+
+sealed class Screen(
+    val route: String,
+    val title: String,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector
+) {
+    object Auth : Screen("auth", "Auth", Icons.Filled.Login, Icons.Outlined.Login)
+    object Home : Screen("home", "Inicio", Icons.Filled.Home, Icons.Outlined.Home)
+    object Explore : Screen("explore", "Explorar", Icons.Filled.Explore, Icons.Outlined.Explore)
+    object Create : Screen("create", "Crear", Icons.Filled.Add, Icons.Outlined.Add)
+    object Marketplace : Screen("marketplace", "Mercado", Icons.Filled.ShoppingBag, Icons.Outlined.ShoppingBag)
+    object Profile : Screen("profile", "Perfil", Icons.Filled.Person, Icons.Outlined.Person)
+    object Notifications : Screen("notifications", "Notificaciones", Icons.Filled.Notifications, Icons.Outlined.Notifications)
+    object Messages : Screen("messages", "Mensajes", Icons.Filled.Chat, Icons.Outlined.Chat)
+    object Stats : Screen("stats", "Estadísticas", Icons.Filled.Analytics, Icons.Outlined.Analytics)
+    object Settings : Screen("settings", "Ajustes", Icons.Filled.Settings, Icons.Outlined.Settings)
+}
+
+val bottomNavItems = listOf(
+    Screen.Home,
+    Screen.Explore,
+    Screen.Create,
+    Screen.Marketplace,
+    Screen.Profile
+)
+
+@Composable
+fun ReLifeNavigation() {
+    val navController = rememberNavController()
+    var isLoggedIn by remember { mutableStateOf(false) }
+    
+    if (!isLoggedIn) {
+        AuthScreen(
+            onLoginSuccess = { isLoggedIn = true }
+        )
+    } else {
+        MainScaffold(navController = navController)
+    }
+}
+
+@Composable
+fun MainScaffold(navController: NavHostController) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+    
+    val showBottomBar = currentDestination?.route in bottomNavItems.map { it.route }
+    
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) {
+                ReLifeBottomBar(
+                    navController = navController,
+                    currentDestination = currentDestination
+                )
+            }
+        },
+        containerColor = BackgroundLight
+    ) { paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Home.route,
+            modifier = Modifier.padding(paddingValues),
+            enterTransition = {
+                fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(300)
+                )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(300)
+                )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(300)
+                )
+            }
+        ) {
+            composable(Screen.Home.route) {
+                HomeScreen(
+                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
+                    onNavigateToMessages = { navController.navigate(Screen.Messages.route) }
+                )
+            }
+            
+            composable(Screen.Explore.route) {
+                ExploreScreen()
+            }
+            
+            composable(Screen.Create.route) {
+                // Create post modal/screen
+                CreatePostPlaceholder(onBack = { navController.popBackStack() })
+            }
+            
+            composable(Screen.Marketplace.route) {
+                MarketplaceScreen()
+            }
+            
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToStats = { navController.navigate(Screen.Stats.route) }
+                )
+            }
+            
+            composable(Screen.Notifications.route) {
+                NotificationsScreen(onBack = { navController.popBackStack() })
+            }
+            
+            composable(Screen.Messages.route) {
+                MessagesScreen(onBack = { navController.popBackStack() })
+            }
+            
+            composable(Screen.Stats.route) {
+                StatsScreen(onBack = { navController.popBackStack() })
+            }
+            
+            composable(Screen.Settings.route) {
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onLogout = { 
+                        navController.navigate(Screen.Auth.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ReLifeBottomBar(
+    navController: NavHostController,
+    currentDestination: androidx.navigation.NavDestination?
+) {
+    NavigationBar(
+        containerColor = Color.White,
+        tonalElevation = 8.dp
+    ) {
+        bottomNavItems.forEach { screen ->
+            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+            
+            if (screen == Screen.Create) {
+                // Special FAB for create
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { navController.navigate(screen.route) },
+                    icon = {
+                        FloatingActionButton(
+                            onClick = { navController.navigate(screen.route) },
+                            modifier = Modifier.size(48.dp),
+                            containerColor = Emerald500,
+                            contentColor = Color.White,
+                            elevation = FloatingActionButtonDefaults.elevation(
+                                defaultElevation = 4.dp
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Crear"
+                            )
+                        }
+                    },
+                    label = { },
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = Color.Transparent
+                    )
+                )
+            } else {
+                NavigationBarItem(
+                    selected = selected,
+                    onClick = {
+                        navController.navigate(screen.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = if (selected) screen.selectedIcon else screen.unselectedIcon,
+                            contentDescription = screen.title
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = screen.title,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Emerald600,
+                        selectedTextColor = Emerald600,
+                        unselectedIconColor = Stone400,
+                        unselectedTextColor = Stone400,
+                        indicatorColor = Emerald100
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CreatePostPlaceholder(onBack: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Default.AddPhotoAlternate,
+                contentDescription = null,
+                tint = Emerald500,
+                modifier = Modifier.size(64.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Crear nuevo post",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            OutlinedButton(onClick = onBack) {
+                Text("Volver")
+            }
+        }
+    }
+}

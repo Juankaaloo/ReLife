@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ReLife</string>
+    
+    <!-- Auth -->
+    <string name="login">Iniciar Sesión</string>
+    <string name="register">Registrarse</string>
+    <string name="email">Email</string>
+    <string name="password">Contraseña</string>
+    <string name="name">Nombre</string>
+    <string name="username">Usuario</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="continue_with">O continuar con</string>
+    <string name="no_account">¿No tienes cuenta?</string>
+    <string name="have_account">¿Ya tienes cuenta?</string>
+    <string name="sign_up">Regístrate</string>
+    <string name="sign_in">Inicia sesión</string>
+    
+    <!-- Navigation -->
+    <string name="home">Inicio</string>
+    <string name="explore">Explorar</string>
+    <string name="create">Crear</string>
+    <string name="marketplace">Mercado</string>
+    <string name="profile">Perfil</string>
+    <string name="notifications">Notificaciones</string>
+    <string name="messages">Mensajes</string>
+    <string name="stats">Estadísticas</string>
+    <string name="settings">Ajustes</string>
+    
+    <!-- Home -->
+    <string name="hello">Hola</string>
+    <string name="search_placeholder">Buscar proyectos, creadores...</string>
+    <string name="trending">Tendencias</string>
+    <string name="following">Seguidos</string>
+    <string name="trending_topics">Temas del momento</string>
+    
+    <!-- Explore -->
+    <string name="all">Todo</string>
+    <string name="furniture">Muebles</string>
+    <string name="lighting">Iluminación</string>
+    <string name="decoration">Decoración</string>
+    <string name="fashion">Moda</string>
+    <string name="garden">Jardín</string>
+    <string name="tech">Tech</string>
+    <string name="featured_creators">Creadores destacados</string>
+    <string name="popular_tags">Tags populares</string>
+    
+    <!-- Marketplace -->
+    <string name="sell">Vender</string>
+    <string name="search_products">Buscar productos...</string>
+    <string name="shipping_available">Envío disponible</string>
+    <string name="buy_now">Comprar ahora</string>
+    <string name="add_to_favorites">Añadir a favoritos</string>
+    <string name="send_message">Enviar mensaje</string>
+    <string name="new_condition">Nuevo</string>
+    <string name="restored_condition">Restaurado</string>
+    <string name="used_condition">Usado</string>
+    
+    <!-- Profile -->
+    <string name="posts">Publicaciones</string>
+    <string name="followers">Seguidores</string>
+    <string name="following_count">Siguiendo</string>
+    <string name="likes">Likes</string>
+    <string name="saved">Guardados</string>
+    <string name="edit_profile">Editar perfil</string>
+    <string name="follow">Seguir</string>
+    <string name="unfollow">Dejar de seguir</string>
+    
+    <!-- Notifications -->
+    <string name="all_notifications">Todas</string>
+    <string name="unread">Sin leer</string>
+    <string name="comments">Comentarios</string>
+    <string name="sales">Ventas</string>
+    <string name="today">Hoy</string>
+    <string name="earlier">Anteriores</string>
+    
+    <!-- Messages -->
+    <string name="search_chats">Buscar chats...</string>
+    <string name="type_message">Escribe un mensaje...</string>
+    <string name="online">En línea</string>
+    <string name="offline">Desconectado</string>
+    
+    <!-- Stats -->
+    <string name="week">Semana</string>
+    <string name="month">Mes</string>
+    <string name="year">Año</string>
+    <string name="views">Visualizaciones</string>
+    <string name="total_income">Ingresos totales</string>
+    <string name="monthly_income">Ingresos del mes</string>
+    <string name="products_on_sale">Productos en venta</string>
+    <string name="pending_orders">Pedidos pendientes</string>
+    <string name="weekly_activity">Actividad semanal</string>
+    <string name="engagement">Engagement</string>
+    <string name="recent_transactions">Transacciones recientes</string>
+    <string name="most_viewed">Más vistos</string>
+    <string name="audience_insights">Insights de audiencia</string>
+    
+    <!-- Settings -->
+    <string name="edit_photo">Editar foto</string>
+    <string name="security">Seguridad</string>
+    <string name="subscription_pro">Suscripción Pro</string>
+    <string name="logout">Cerrar sesión</string>
+    <string name="bio">Biografía</string>
+    <string name="website">Sitio web</string>
+    <string name="save_changes">Guardar cambios</string>
+    <string name="email_notifications">Notificaciones por email</string>
+    <string name="push_notifications">Notificaciones push</string>
+    <string name="public_profile">Perfil público</string>
+    <string name="show_online_status">Mostrar estado en línea</string>
+    <string name="logout_confirmation">¿Estás seguro de que quieres cerrar sesión?</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    
+    <!-- General -->
+    <string name="like">Me gusta</string>
+    <string name="comment">Comentar</string>
+    <string name="share">Compartir</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="loading">Cargando...</string>
+    <string name="error">Error</string>
+    <string name="retry">Reintentar</string>
+    <string name="empty_state">No hay contenido disponible</string>
+    <string name="add_comment">Añadir comentario...</string>
+    
+    <!-- Tagline -->
+    <string name="tagline">Transforma, Crea, Inspira</string>
+    <string name="tagline_description">Únete a la comunidad de reciclaje creativo más grande del mundo</string>
+</resources>
