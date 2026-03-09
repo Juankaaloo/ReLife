@@ -7,13 +7,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.relife"
-    compileSdk = 34
+    namespace = "com.relife"
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.relife"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
 
@@ -42,9 +42,7 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
-    }
+    // composeOptions ya NO se necesita con Kotlin 2.x + kotlin.compose plugin
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
