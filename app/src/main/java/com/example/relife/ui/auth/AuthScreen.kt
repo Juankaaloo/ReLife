@@ -1,8 +1,10 @@
 package com.relife.ui.auth
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relife.ui.components.*
+import com.relife.R
 import com.relife.ui.theme.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -92,31 +97,18 @@ fun AuthScreen(onLoginSuccess: () -> Unit) {
             Spacer(modifier = Modifier.height(56.dp))
             Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color.White.copy(alpha = 0.2f)),
+                    .size(130.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector        = Icons.Default.Recycling,
-                    contentDescription = null,
-                    tint               = Color.White,
-                    modifier           = Modifier.size(48.dp)
+                Image(
+                    painter            = painterResource(id = R.drawable.relifer),
+                    contentDescription = "ReLife Logo",
+                    contentScale       = ContentScale.Fit,
+                    modifier           = Modifier.size(100.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(14.dp))
-            Text(
-                text       = "ReLife",
-                fontSize   = 34.sp,
-                fontWeight = FontWeight.Black,
-                color      = Color.White,
-                letterSpacing = 1.sp
-            )
-            Text(
-                text  = "Transforma · Crea · Inspira",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.85f)
-            )
 
             Spacer(modifier = Modifier.height(36.dp))
 
@@ -262,6 +254,20 @@ fun AuthScreen(onLoginSuccess: () -> Unit) {
                                 isLoading = isLoading,
                                 modifier  = Modifier.fillMaxWidth()
                             )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            OutlinedButton(
+                                onClick = { onLoginSuccess() },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, Stone300),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Stone500)
+                            ) {
+                                Icon(Icons.Default.PersonOutline, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Continuar como invitado", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+                            }
 
                             Spacer(modifier = Modifier.height(20.dp))
 
