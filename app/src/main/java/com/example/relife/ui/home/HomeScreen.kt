@@ -129,14 +129,20 @@ private val categoryIcons = mapOf(
 @Composable
 fun HomeScreen(
     onNavigateToNotifications: () -> Unit,
-    onNavigateToMessages: () -> Unit
+    onNavigateToMessages: () -> Unit,
+    isGuest: Boolean = false,
+    onRequestLogin: () -> Unit = {}
 ) {
     var selectedTab      by remember { mutableIntStateOf(0) }
     var searchQuery      by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<PostCategory?>(null) }
     var showSearch       by remember { mutableStateOf(false) }
     var isRefreshing     by remember { mutableStateOf(false) }
-    val posts            = remember { MockData.posts }
+    var showGuestDialog  by remember { mutableStateOf(false) }
+    val posts            = remember {
+        if (isGuest) MockData.posts.map { it.copy(isLiked = false, isSaved = false) }
+        else MockData.posts
+    }
     val stories          = remember { MockData.stories }
     val trendingTags     = remember { MockData.trendingTags }
     val gridState        = rememberLazyGridState()
@@ -157,6 +163,17 @@ fun HomeScreen(
     val showScrollTop by remember { derivedStateOf { gridState.firstVisibleItemIndex > 3 } }
 
     Box(modifier = Modifier.fillMaxSize()) {
+
+        // Guest login required dialog
+        GuestLoginRequiredDialog(
+            show         = showGuestDialog,
+            onDismiss    = { showGuestDialog = false },
+            onLoginClick = {
+                showGuestDialog = false
+                onRequestLogin()
+            }
+        )
+
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh    = {
@@ -175,12 +192,16 @@ fun HomeScreen(
                     .background(BackgroundLight)
             ) {
                 HomeHeader(
-                    userName             = MockData.currentUser.name.split(" ").first(),
-                    avatarUrl            = MockData.currentUser.avatarUrl,
+                    userName             = if (isGuest) "Invitado" else MockData.currentUser.name.split(" ").first(),
+                    avatarUrl            = if (isGuest) null else MockData.currentUser.avatarUrl,
                     searchQuery          = searchQuery,
                     onSearchChange       = { searchQuery = it },
-                    onNotificationsClick = onNavigateToNotifications,
-                    onMessagesClick      = onNavigateToMessages,
+                    onNotificationsClick = {
+                        if (isGuest) showGuestDialog = true else onNavigateToNotifications()
+                    },
+                    onMessagesClick      = {
+                        if (isGuest) showGuestDialog = true else onNavigateToMessages()
+                    },
                     showSearch           = showSearch,
                     onToggleSearch       = { showSearch = !showSearch }
                 )
@@ -199,7 +220,11 @@ fun HomeScreen(
 
                     // 🎮 Challenges carousel
                     item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
-                        ChallengesSection(challenges = gameChallenges)
+                        ChallengesSection(
+                            challenges    = gameChallenges,
+                            isGuest       = isGuest,
+                            onGuestAction = { showGuestDialog = true }
+                        )
                     }
 
                     // Category chips
@@ -267,7 +292,11 @@ fun HomeScreen(
                                 start = if (idx % 2 == 0) 16.dp else 0.dp,
                                 end   = if (idx % 2 == 1) 16.dp else 0.dp
                             )) {
-                                AnimatedPostCard(post = post)
+                                AnimatedPostCard(
+                                    post = post,
+                                    isGuest = isGuest,
+                                    onGuestAction = { showGuestDialog = true }
+                                )
                             }
                         }
                     }
@@ -300,7 +329,11 @@ fun HomeScreen(
 
 // ─── Challenges Section ────────────────────────────────────────────────────────
 @Composable
-private fun ChallengesSection(challenges: List<GameChallenge>) {
+private fun ChallengesSection(
+    challenges: List<GameChallenge>,
+    isGuest: Boolean = false,
+    onGuestAction: () -> Unit = {}
+) {
     // Track claimed state per challenge
     val claimed = remember { mutableStateMapOf<Int, Boolean>() }
 
@@ -333,7 +366,7 @@ private fun ChallengesSection(challenges: List<GameChallenge>) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        PointsMiniCard()
+        PointsMiniCard(isGuest = isGuest)
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -343,9 +376,14 @@ private fun ChallengesSection(challenges: List<GameChallenge>) {
         ) {
             items(challenges) { challenge ->
                 ChallengeCard(
-                    challenge = challenge,
-                    isClaimed = claimed[challenge.id] == true,
-                    onClaim   = { claimed[challenge.id] = true }
+                    challenge     = if (isGuest) challenge.copy(progress = 0f, currentStep = 0) else challenge,
+                    isClaimed     = if (isGuest) false else claimed[challenge.id] == true,
+                    onClaim       = {
+                        if (isGuest) onGuestAction()
+                        else claimed[challenge.id] = true
+                    },
+                    isGuest       = isGuest,
+                    onGuestAction = onGuestAction
                 )
             }
         }
@@ -357,9 +395,21 @@ private fun ChallengesSection(challenges: List<GameChallenge>) {
 
 // ─── Points Mini Card ─────────────────────────────────────────────────────────
 @Composable
-private fun PointsMiniCard() {
+private fun PointsMiniCard(isGuest: Boolean = false) {
+    val targetXp = if (isGuest) 0f else 1250f / 2000f
     val animXp = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { animXp.animateTo(1250f / 2000f, tween(900, easing = EaseOutCubic)) }
+    LaunchedEffect(isGuest) { animXp.animateTo(targetXp, tween(900, easing = EaseOutCubic)) }
+
+    val level      = if (isGuest) "–" else "5"
+    val levelLabel = if (isGuest) "Nivel –" else "Nivel 5"
+    val rankLabel  = if (isGuest) "Invitado" else "Creador"
+    val rankColor  = if (isGuest) Stone400 else Emerald600
+    val rankBg     = if (isGuest) Stone100 else Emerald50
+    val xpText     = if (isGuest) "0 / 0 XP" else "1.250 / 2.000 XP"
+    val points     = if (isGuest) "0" else "1.250"
+    val streak     = if (isGuest) "0" else "7"
+    val barGradient = if (isGuest) listOf(Stone200, Stone300) else listOf(Emerald500, Teal400)
+    val badgeGradient = if (isGuest) listOf(Stone300, Stone400) else listOf(Emerald500, Teal400)
 
     Card(
         modifier  = Modifier
@@ -382,27 +432,27 @@ private fun PointsMiniCard() {
                     modifier         = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Brush.linearGradient(listOf(Emerald500, Teal400))),
+                        .background(Brush.linearGradient(badgeGradient)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("5", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, color = Color.White)
+                    Text(level, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, color = Color.White)
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            "Nivel 5",
+                            levelLabel,
                             style      = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Black,
                             color      = Stone800,
                             fontSize   = 12.sp
                         )
                         Spacer(modifier = Modifier.width(5.dp))
-                        Surface(shape = RoundedCornerShape(4.dp), color = Emerald50) {
+                        Surface(shape = RoundedCornerShape(4.dp), color = rankBg) {
                             Text(
-                                "Creador",
+                                rankLabel,
                                 style    = MaterialTheme.typography.labelSmall,
-                                color    = Emerald600,
+                                color    = rankColor,
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
@@ -422,12 +472,12 @@ private fun PointsMiniCard() {
                                 .fillMaxWidth(animXp.value)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(3.dp))
-                                .background(Brush.horizontalGradient(listOf(Emerald500, Teal400)))
+                                .background(Brush.horizontalGradient(barGradient))
                         )
                     }
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        "1.250 / 2.000 XP",
+                        xpText,
                         style    = MaterialTheme.typography.labelSmall,
                         color    = Stone400,
                         fontSize = 8.sp
@@ -440,13 +490,13 @@ private fun PointsMiniCard() {
 
             // Puntos
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Default.Stars, null, tint = Amber500, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Stars, null, tint = if (isGuest) Stone300 else Amber500, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "1.250",
+                    points,
                     style      = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Black,
-                    color      = Stone800,
+                    color      = if (isGuest) Stone400 else Stone800,
                     fontSize   = 13.sp
                 )
                 Text("puntos", style = MaterialTheme.typography.labelSmall, color = Stone400, fontSize = 8.sp)
@@ -457,13 +507,13 @@ private fun PointsMiniCard() {
 
             // Racha
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("🔥", fontSize = 14.sp)
+                Text(if (isGuest) "🔒" else "🔥", fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    "7",
+                    streak,
                     style      = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Black,
-                    color      = Stone800,
+                    color      = if (isGuest) Stone400 else Stone800,
                     fontSize   = 13.sp
                 )
                 Text("días", style = MaterialTheme.typography.labelSmall, color = Stone400, fontSize = 8.sp)
@@ -476,7 +526,9 @@ private fun PointsMiniCard() {
 private fun ChallengeCard(
     challenge: GameChallenge,
     isClaimed: Boolean,
-    onClaim: () -> Unit
+    onClaim: () -> Unit,
+    isGuest: Boolean = false,
+    onGuestAction: () -> Unit = {}
 ) {
     var showConfetti by remember { mutableStateOf(false) }
     val scope        = rememberCoroutineScope()
@@ -717,7 +769,9 @@ private fun ChallengeCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            if (isComplete && !isClaimed) {
+                            if (isGuest) {
+                                onGuestAction()
+                            } else if (isComplete && !isClaimed) {
                                 showConfetti = true
                                 scope.launch {
                                     delay(1500)
@@ -728,6 +782,7 @@ private fun ChallengeCard(
                         },
                     shape = RoundedCornerShape(10.dp),
                     color = when {
+                        isGuest    -> Emerald500
                         isClaimed  -> Stone100
                         isComplete -> accentColor
                         else       -> accentColor.copy(alpha = 0.12f)
@@ -735,6 +790,7 @@ private fun ChallengeCard(
                 ) {
                     Text(
                         text = when {
+                            isGuest    -> "Regístrate para participar"
                             isClaimed  -> "✓ Canjeado"
                             isComplete -> "¡Canjear!"
                             else       -> "En progreso"
@@ -744,6 +800,7 @@ private fun ChallengeCard(
                         fontSize   = 10.sp,
                         textAlign  = TextAlign.Center,
                         color      = when {
+                            isGuest    -> Color.White
                             isClaimed  -> Stone400
                             isComplete -> Color.White
                             else       -> accentColor
@@ -1069,19 +1126,27 @@ private fun TrendingTagCard(tag: String, count: Int) {
 
 // ─── Post Cards ────────────────────────────────────────────────────────────────
 @Composable
-private fun AnimatedPostCard(post: Post) {
+private fun AnimatedPostCard(
+    post: Post,
+    isGuest: Boolean = false,
+    onGuestAction: () -> Unit = {}
+) {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(post.id) { visible = true }
     AnimatedVisibility(
         visible = visible,
         enter   = fadeIn(tween(300)) + scaleIn(tween(300), initialScale = 0.92f)
     ) {
-        EnhancedPostCard(post = post)
+        EnhancedPostCard(post = post, isGuest = isGuest, onGuestAction = onGuestAction)
     }
 }
 
 @Composable
-private fun EnhancedPostCard(post: Post) {
+private fun EnhancedPostCard(
+    post: Post,
+    isGuest: Boolean = false,
+    onGuestAction: () -> Unit = {}
+) {
     var isLiked          by remember { mutableStateOf(post.isLiked) }
     var isSaved          by remember { mutableStateOf(post.isSaved) }
     var likesCount       by remember { mutableIntStateOf(post.likesCount) }
@@ -1135,7 +1200,9 @@ private fun EnhancedPostCard(post: Post) {
                     )
                 }
                 IconButton(
-                    onClick  = { isSaved = !isSaved },
+                    onClick  = {
+                        if (isGuest) onGuestAction() else { isSaved = !isSaved }
+                    },
                     modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).size(32.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.9f))
                 ) {
                     Icon(
@@ -1179,14 +1246,18 @@ private fun EnhancedPostCard(post: Post) {
                 ) {
                     Row(
                         modifier          = Modifier.clickable {
-                            isLiked    = !isLiked
-                            likesCount = if (isLiked) likesCount + 1 else likesCount - 1
-                            if (isLiked) {
-                                val id = System.currentTimeMillis()
-                                floatingHearts = floatingHearts + id
-                                scope.launch {
-                                    delay(900)
-                                    floatingHearts = floatingHearts - id
+                            if (isGuest) {
+                                onGuestAction()
+                            } else {
+                                isLiked    = !isLiked
+                                likesCount = if (isLiked) likesCount + 1 else likesCount - 1
+                                if (isLiked) {
+                                    val id = System.currentTimeMillis()
+                                    floatingHearts = floatingHearts + id
+                                    scope.launch {
+                                        delay(900)
+                                        floatingHearts = floatingHearts - id
+                                    }
                                 }
                             }
                         },
@@ -1209,7 +1280,9 @@ private fun EnhancedPostCard(post: Post) {
                     Icon(
                         Icons.Outlined.Share, "Compartir",
                         tint     = Stone400,
-                        modifier = Modifier.size(16.dp).clickable { showShareConfirm = true }
+                        modifier = Modifier.size(16.dp).clickable {
+                            if (isGuest) onGuestAction() else showShareConfirm = true
+                        }
                     )
                 }
                 AnimatedVisibility(

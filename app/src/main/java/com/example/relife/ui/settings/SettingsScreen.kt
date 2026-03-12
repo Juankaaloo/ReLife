@@ -38,7 +38,9 @@ private enum class ThemeOption(val label: String, val icon: ImageVector) {
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    isGuest: Boolean = false,
+    onRequestLogin: () -> Unit = {}
 ) {
     val user = remember { MockData.currentUser }
     var activeSection    by remember { mutableStateOf(SettingsSection.PROFILE) }
@@ -87,6 +89,115 @@ fun SettingsScreen(
         },
         containerColor = BackgroundLight
     ) { padding ->
+
+        // ── Guest Settings ──────────────────────────────────────────────────
+        if (isGuest) {
+            LazyColumn(
+                modifier            = Modifier.padding(padding).fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
+                // Login CTA card
+                item {
+                    Card(
+                        modifier  = Modifier.fillMaxWidth().padding(16.dp),
+                        shape     = RoundedCornerShape(20.dp),
+                        colors    = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(
+                            modifier            = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .background(Brush.linearGradient(listOf(Emerald100, Teal100))),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Person, null, tint = Emerald600, modifier = Modifier.size(28.dp))
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text("Modo invitado", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                "Inicia sesión para acceder a todas las opciones de configuración.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Stone500,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            PrimaryButton(
+                                text    = "Iniciar sesión / Registrarse",
+                                onClick = onRequestLogin,
+                                modifier = Modifier.fillMaxWidth(),
+                                icon    = Icons.Default.Login
+                            )
+                        }
+                    }
+                }
+                // Appearance section for guest
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        shape    = RoundedCornerShape(16.dp),
+                        colors   = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Apariencia", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Emerald600)
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier              = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                ThemeOption.entries.forEach { theme ->
+                                    val sel = selectedTheme == theme
+                                    Surface(
+                                        modifier = Modifier.weight(1f).clickable { selectedTheme = theme },
+                                        shape    = RoundedCornerShape(12.dp),
+                                        color    = if (sel) Emerald50 else Stone100,
+                                        border   = if (sel) androidx.compose.foundation.BorderStroke(2.dp, Emerald500) else null
+                                    ) {
+                                        Column(
+                                            modifier            = Modifier.padding(12.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Icon(theme.icon, null, tint = if (sel) Emerald600 else Stone400, modifier = Modifier.size(24.dp))
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(theme.label, style = MaterialTheme.typography.labelSmall, fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal, color = if (sel) Emerald700 else Stone600)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // Logout / exit guest
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        shape    = RoundedCornerShape(16.dp),
+                        colors   = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Row(
+                            modifier          = Modifier
+                                .fillMaxWidth()
+                                .clickable { onLogout() }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.ExitToApp, null, tint = Error, modifier = Modifier.size(22.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text("Salir del modo invitado", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, color = Error)
+                        }
+                    }
+                }
+                item { Spacer(modifier = Modifier.height(32.dp)) }
+            }
+            return@Scaffold
+        }
+
+        // ── Regular (logged-in) Settings ────────────────────────────────────
         LazyColumn(
             modifier            = Modifier.padding(padding).fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(0.dp)

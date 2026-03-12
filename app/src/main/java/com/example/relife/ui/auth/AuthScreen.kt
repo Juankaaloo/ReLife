@@ -38,7 +38,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun AuthScreen(onLoginSuccess: () -> Unit) {
+fun AuthScreen(
+    onLoginSuccess: () -> Unit,
+    onGuestLogin: () -> Unit = {}
+) {
     var isLogin      by remember { mutableStateOf(true) }
     var email        by remember { mutableStateOf("") }
     var password     by remember { mutableStateOf("") }
@@ -258,7 +261,7 @@ fun AuthScreen(onLoginSuccess: () -> Unit) {
                             Spacer(modifier = Modifier.height(12.dp))
 
                             OutlinedButton(
-                                onClick = { onLoginSuccess() },
+                                onClick = { onGuestLogin() },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 border = BorderStroke(1.dp, Stone300),

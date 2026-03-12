@@ -50,18 +50,25 @@ private enum class SortOption(val label: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MarketplaceScreen() {
+fun MarketplaceScreen(
+    isGuest: Boolean = false,
+    onRequestLogin: () -> Unit = {}
+) {
     var searchQuery       by remember { mutableStateOf("") }
     var selectedCategory  by remember { mutableStateOf(PostCategory.ALL) }
     var isGridView        by remember { mutableStateOf(true) }
     var showCreateDialog  by remember { mutableStateOf(false) }
     var showFiltersSheet  by remember { mutableStateOf(false) }
+    var showGuestDialog   by remember { mutableStateOf(false) }
     var sortOption        by remember { mutableStateOf(SortOption.NEWEST) }
     var onlyShipping      by remember { mutableStateOf(false) }
     var maxPrice          by remember { mutableFloatStateOf(500f) }
     var selectedCondition by remember { mutableStateOf<ProductCondition?>(null) }
 
-    val products = remember { MockData.products }
+    val products = remember {
+        if (isGuest) MockData.products.map { it.copy(isFavorite = false) }
+        else MockData.products
+    }
 
     // Active filter count badge
     val activeFilters = listOf(
@@ -102,7 +109,9 @@ fun MarketplaceScreen() {
                 onSearchChange   = { searchQuery = it },
                 isGridView       = isGridView,
                 onViewToggle     = { isGridView = !isGridView },
-                onSellClick      = { showCreateDialog = true },
+                onSellClick      = {
+                    if (isGuest) showGuestDialog = true else showCreateDialog = true
+                },
                 activeFilters    = activeFilters,
                 onFiltersClick   = { showFiltersSheet = true }
             )
@@ -233,6 +242,19 @@ fun MarketplaceScreen() {
             onConfirm = { showCreateDialog = false }
         )
     }
+
+    // ── Guest login dialog ──────────────────────────────────────────────────
+    GuestLoginRequiredDialog(
+        show         = showGuestDialog,
+        onDismiss    = { showGuestDialog = false },
+        onLoginClick = {
+            showGuestDialog = false
+            onRequestLogin()
+        },
+        title   = "Accede al marketplace",
+        message = "Inicia sesión para comprar, vender y guardar productos favoritos.",
+        icon    = Icons.Default.ShoppingBag
+    )
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
@@ -281,7 +303,11 @@ private fun MarketplaceHeader(
             Spacer(modifier = Modifier.height(14.dp))
 
             // Search + filter + view toggle row
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                modifier              = Modifier.padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 // Search
                 Surface(
                     shape    = RoundedCornerShape(16.dp),
@@ -309,7 +335,6 @@ private fun MarketplaceHeader(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
                 // Filter button with badge
                 Box {
                     IconButton(
@@ -327,7 +352,6 @@ private fun MarketplaceHeader(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
                 // View toggle
                 IconButton(
                     onClick  = onViewToggle,

@@ -59,8 +59,19 @@ private val profileBadges = listOf(
 @Composable
 fun ProfileScreen(
     onNavigateToSettings: () -> Unit,
-    onNavigateToStats: () -> Unit
+    onNavigateToStats: () -> Unit,
+    isGuest: Boolean = false,
+    onRequestLogin: () -> Unit = {}
 ) {
+    // If guest, show a generic guest profile screen
+    if (isGuest) {
+        GuestProfileScreen(
+            onLoginClick         = onRequestLogin,
+            onNavigateToSettings = onNavigateToSettings
+        )
+        return
+    }
+
     val user        = remember { MockData.currentUser }
     val posts       = remember { MockData.posts }
     val likedPosts  = remember { posts.filter { it.isLiked } }
@@ -640,5 +651,162 @@ private fun EmptyTabState(icon: ImageVector, title: String, desc: String) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(desc, style = MaterialTheme.typography.bodySmall, color = Stone400, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 40.dp))
         }
+    }
+}
+// ─── Guest Profile Screen ─────────────────────────────────────────────────────
+@Composable
+private fun GuestProfileScreen(
+    onLoginClick: () -> Unit,
+    onNavigateToSettings: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundLight)
+    ) {
+        // ── Cover area with gradient ────────────────────────────────────────
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .background(Brush.linearGradient(listOf(Emerald600, Teal500, Cyan400)))
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(0.25f))))
+                )
+            }
+            // Settings button
+            Row(
+                modifier              = Modifier.fillMaxWidth().padding(12.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                ActionCircleButton(Icons.Default.Settings, "Ajustes", onClick = onNavigateToSettings)
+            }
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = 45.dp)
+            ) {
+                UserAvatar(
+                    imageUrl = null,
+                    size     = 100.dp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(56.dp))
+
+        // ── Guest info ──────────────────────────────────────────────────────
+        Column(
+            modifier            = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text       = "Invitado",
+                style      = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text  = "@invitado",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Stone400
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Stats row (all zeros)
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                GuestStatItem("0", "Posts")
+                GuestStatItem("0", "Seguidores")
+                GuestStatItem("0", "Siguiendo")
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // CTA card
+            Card(
+                modifier  = Modifier.fillMaxWidth(),
+                shape     = RoundedCornerShape(20.dp),
+                colors    = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier            = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(Brush.linearGradient(listOf(Emerald50, Teal50))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.PersonAdd,
+                            contentDescription = null,
+                            tint     = Emerald500,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text       = "Crea tu perfil",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text      = "Regístrate para compartir tus creaciones, seguir a otros creadores y vender tus productos.",
+                        style     = MaterialTheme.typography.bodyMedium,
+                        color     = Stone500,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    PrimaryButton(
+                        text     = "Crear cuenta gratis",
+                        onClick  = onLoginClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        icon     = Icons.Default.PersonAdd
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    TextButton(
+                        text    = "Ya tengo cuenta · Iniciar sesión",
+                        onClick = onLoginClick
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GuestStatItem(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text       = value,
+            style      = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color      = Stone300
+        )
+        Text(
+            text  = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = Stone400
+        )
     }
 }

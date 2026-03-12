@@ -21,6 +21,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.relife.ui.auth.AuthScreen
+import com.relife.ui.components.GuestBlockedScreen
+import com.relife.ui.components.GuestLoginRequiredDialog
 import com.relife.ui.explore.ExploreScreen
 import com.relife.ui.home.HomeScreen
 import com.relife.ui.marketplace.MarketplaceScreen
@@ -60,16 +62,33 @@ val bottomNavItems = listOf(
 @Composable
 fun ReLifeNavigation() {
     var isLoggedIn by remember { mutableStateOf(false) }
+    var isGuest    by remember { mutableStateOf(false) }
 
-    if (!isLoggedIn) {
+    if (!isLoggedIn && !isGuest) {
         AuthScreen(
-            onLoginSuccess = { isLoggedIn = true }
+            onLoginSuccess = {
+                isLoggedIn = true
+                isGuest    = false
+            },
+            onGuestLogin = {
+                isGuest    = true
+                isLoggedIn = false
+            }
         )
     } else {
         val navController = rememberNavController()
         MainScaffold(
             navController = navController,
-            onLogout      = { isLoggedIn = false }
+            isGuest       = isGuest,
+            onLogout      = {
+                isLoggedIn = false
+                isGuest    = false
+            },
+            onRequestLogin = {
+                // Guest wants to log in — go back to auth
+                isLoggedIn = false
+                isGuest    = false
+            }
         )
     }
 }
@@ -77,19 +96,38 @@ fun ReLifeNavigation() {
 @Composable
 fun MainScaffold(
     navController: NavHostController,
-    onLogout: () -> Unit
+    isGuest: Boolean,
+    onLogout: () -> Unit,
+    onRequestLogin: () -> Unit
 ) {
     val navBackStackEntry  by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
     val showBottomBar = currentDestination?.route in bottomNavItems.map { it.route }
 
+    // Dialog state for when guest tries to use Create (FAB)
+    var showGuestCreateDialog by remember { mutableStateOf(false) }
+
+    GuestLoginRequiredDialog(
+        show         = showGuestCreateDialog,
+        onDismiss    = { showGuestCreateDialog = false },
+        onLoginClick = {
+            showGuestCreateDialog = false
+            onRequestLogin()
+        },
+        title   = "Crea tu primera publicación",
+        message = "Inicia sesión o regístrate para compartir tus creaciones con la comunidad ReLife.",
+        icon    = Icons.Default.AddCircle
+    )
+
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
                 ReLifeBottomBar(
                     navController      = navController,
-                    currentDestination = currentDestination
+                    currentDestination = currentDestination,
+                    isGuest            = isGuest,
+                    onGuestCreateClick = { showGuestCreateDialog = true }
                 )
             }
         },
@@ -115,37 +153,89 @@ fun MainScaffold(
             composable(Screen.Home.route) {
                 HomeScreen(
                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
-                    onNavigateToMessages      = { navController.navigate(Screen.Messages.route) }
+                    onNavigateToMessages      = { navController.navigate(Screen.Messages.route) },
+                    isGuest                   = isGuest,
+                    onRequestLogin            = onRequestLogin
                 )
             }
             composable(Screen.Explore.route) {
-                ExploreScreen()
+                ExploreScreen(
+                    isGuest        = isGuest,
+                    onRequestLogin = onRequestLogin
+                )
             }
             composable(Screen.Create.route) {
-                CreatePostPlaceholder(onBack = { navController.popBackStack() })
+                if (isGuest) {
+                    GuestBlockedScreen(
+                        icon        = Icons.Default.AddPhotoAlternate,
+                        title       = "Comparte tus creaciones",
+                        description = "Inicia sesión para publicar tus proyectos de upcycling y conectar con la comunidad.",
+                        onLoginClick = onRequestLogin,
+                        onBack       = { navController.popBackStack() }
+                    )
+                } else {
+                    CreatePostPlaceholder(onBack = { navController.popBackStack() })
+                }
             }
             composable(Screen.Marketplace.route) {
-                MarketplaceScreen()
+                MarketplaceScreen(
+                    isGuest        = isGuest,
+                    onRequestLogin = onRequestLogin
+                )
             }
             composable(Screen.Profile.route) {
                 ProfileScreen(
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                    onNavigateToStats    = { navController.navigate(Screen.Stats.route) }
+                    onNavigateToStats    = { navController.navigate(Screen.Stats.route) },
+                    isGuest              = isGuest,
+                    onRequestLogin       = onRequestLogin
                 )
             }
             composable(Screen.Notifications.route) {
-                NotificationsScreen(onBack = { navController.popBackStack() })
+                if (isGuest) {
+                    GuestBlockedScreen(
+                        icon        = Icons.Default.Notifications,
+                        title       = "Tus notificaciones",
+                        description = "Inicia sesión para recibir notificaciones sobre likes, comentarios, ventas y más.",
+                        onLoginClick = onRequestLogin,
+                        onBack       = { navController.popBackStack() }
+                    )
+                } else {
+                    NotificationsScreen(onBack = { navController.popBackStack() })
+                }
             }
             composable(Screen.Messages.route) {
-                MessagesScreen(onBack = { navController.popBackStack() })
+                if (isGuest) {
+                    GuestBlockedScreen(
+                        icon        = Icons.Default.Chat,
+                        title       = "Mensajes privados",
+                        description = "Inicia sesión para chatear con otros creadores, negociar y compartir ideas.",
+                        onLoginClick = onRequestLogin,
+                        onBack       = { navController.popBackStack() }
+                    )
+                } else {
+                    MessagesScreen(onBack = { navController.popBackStack() })
+                }
             }
             composable(Screen.Stats.route) {
-                StatsScreen(onBack = { navController.popBackStack() })
+                if (isGuest) {
+                    GuestBlockedScreen(
+                        icon        = Icons.Default.Analytics,
+                        title       = "Tus estadísticas",
+                        description = "Inicia sesión para ver las métricas de tus publicaciones, seguidores y ventas.",
+                        onLoginClick = onRequestLogin,
+                        onBack       = { navController.popBackStack() }
+                    )
+                } else {
+                    StatsScreen(onBack = { navController.popBackStack() })
+                }
             }
             composable(Screen.Settings.route) {
                 SettingsScreen(
-                    onBack   = { navController.popBackStack() },
-                    onLogout = onLogout
+                    onBack         = { navController.popBackStack() },
+                    onLogout       = onLogout,
+                    isGuest        = isGuest,
+                    onRequestLogin = onRequestLogin
                 )
             }
         }
@@ -155,7 +245,9 @@ fun MainScaffold(
 @Composable
 fun ReLifeBottomBar(
     navController: NavHostController,
-    currentDestination: androidx.navigation.NavDestination?
+    currentDestination: androidx.navigation.NavDestination?,
+    isGuest: Boolean = false,
+    onGuestCreateClick: () -> Unit = {}
 ) {
     NavigationBar(
         containerColor = Color.White,
@@ -167,10 +259,22 @@ fun ReLifeBottomBar(
             if (screen == Screen.Create) {
                 NavigationBarItem(
                     selected = false,
-                    onClick  = { navController.navigate(screen.route) },
+                    onClick  = {
+                        if (isGuest) {
+                            onGuestCreateClick()
+                        } else {
+                            navController.navigate(screen.route)
+                        }
+                    },
                     icon     = {
                         FloatingActionButton(
-                            onClick        = { navController.navigate(screen.route) },
+                            onClick        = {
+                                if (isGuest) {
+                                    onGuestCreateClick()
+                                } else {
+                                    navController.navigate(screen.route)
+                                }
+                            },
                             modifier       = Modifier.size(48.dp),
                             containerColor = Emerald500,
                             contentColor   = Color.White,

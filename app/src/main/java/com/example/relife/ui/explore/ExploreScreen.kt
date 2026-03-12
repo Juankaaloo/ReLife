@@ -43,12 +43,19 @@ private enum class ExploreView { GRID, LIST }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExploreScreen() {
+fun ExploreScreen(
+    isGuest: Boolean = false,
+    onRequestLogin: () -> Unit = {}
+) {
     var searchQuery      by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(PostCategory.ALL) }
     var viewMode         by remember { mutableStateOf(ExploreView.GRID) }
     var activeSection    by remember { mutableStateOf(0) } // 0=Posts 1=Creadores 2=Tags
-    val posts            = remember { MockData.posts }
+    var showGuestDialog  by remember { mutableStateOf(false) }
+    val posts            = remember {
+        if (isGuest) MockData.posts.map { it.copy(isLiked = false, isSaved = false) }
+        else MockData.posts
+    }
     val creators         = remember { MockData.users }
     val tags             = remember { MockData.trendingTags }
 
@@ -62,6 +69,16 @@ fun ExploreScreen() {
             matchCat && matchSearch
         }
     }
+
+    // Guest dialog
+    GuestLoginRequiredDialog(
+        show         = showGuestDialog,
+        onDismiss    = { showGuestDialog = false },
+        onLoginClick = {
+            showGuestDialog = false
+            onRequestLogin()
+        }
+    )
 
     Column(
         modifier = Modifier
